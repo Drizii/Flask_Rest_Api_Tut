@@ -37,8 +37,68 @@ class ProductSchema(ma.Schema):
 
 
 # Init schema
-product_schema = ProductSchema(strict=True)
-products_schema = ProductSchema(many=True, strict=True)
+product_schema = ProductSchema()  # tu nie trzeba dawać strict=True
+products_schema = ProductSchema(many=True)  # tu nie trzeba dawać strict=True
+
+
+# Create Product
+@app.route('/product', methods=['POST'])
+def add_product():
+    name = request.json['name']
+    description = request.json['description']
+    price = request.json['price']
+    qty = request.json['qty']
+
+    new_product = Product(name, description, price, qty)
+
+    db.session.add(new_product)
+    db.session.commit()
+
+    return product_schema.jsonify(new_product)
+
+
+# Get Single Product
+@app.route('/product/<id>', methods=['GET'])
+def get_product(id):
+    product = Product.query.get(id)
+    return product_schema.jsonify(product)
+
+
+# GET all products
+@app.route('/product', methods=['GET'])
+def get_products():
+    all_products = Product.query.all()
+    result = products_schema.dump(all_products)
+    return jsonify(result)  # tu nie trzeba dawać result.data
+
+
+# Update Product
+@app.route('/product/<id>', methods=['PUT'])
+def update_product(id):
+    product = Product.query.get(id)
+
+    name = request.json['name']
+    description = request.json['description']
+    price = request.json['price']
+    qty = request.json['qty']
+
+    product.name = name
+    product.description = description
+    product.price = price
+    product.qty = qty
+
+    db.session.commit()
+
+    return product_schema.jsonify(product)
+
+
+# Delete product
+@app.route('/product/<id>', methods=['DELETE'])
+def delete_product(id):
+    product = Product.query.get(id)
+    db.session.delete(product)
+    db.session.commit()
+    return product_schema.jsonify(product)
 
 
 @app.route('/', methods=['GET'])
